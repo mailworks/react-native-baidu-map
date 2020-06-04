@@ -232,4 +232,30 @@ RCT_CUSTOM_VIEW_PROPERTY(center, CLLocationCoordinate2D, BaiduMapView) {
     mapView.onChange(params);
 }
 
+/**
+ *地图区域改变完成后会调用此接口
+ *@param mapView 地图View
+ *@param animated 是否动画
+ */
+- (void)mapView:(BMKMapView *)mapView regionDidChangeAnimated:(BOOL)animated
+{
+    CLLocationCoordinate2D targetGeoPt = [mapView getMapStatus].targetGeoPt;
+    BMKCoordinateRegion region = mapView.region;
+    NSDictionary* event = @{
+                            @"type": @"regionDidChange",
+                            @"params": @{
+                                    @"target": @{
+                                            @"latitude": @(targetGeoPt.latitude),
+                                            @"longitude": @(targetGeoPt.longitude)
+                                            },
+                                    @"latitudeDelta": @(region.span.latitudeDelta),
+                                    @"longitudeDelta": @(region.span.longitudeDelta),
+                                    @"zoom": @(mapView.zoomLevel),
+                                    @"overlook": @""
+                                    }
+                            };
+    [self sendEvent:mapView params:event];
+    
+}
+
 @end
