@@ -114,7 +114,7 @@ export default {
 
     return new Promise((resolve, reject) => {
       try {
-        _module.getCurrentPosition(coorType);
+        _module.getCurrentPositionWithoutAddrInfo(coorType);
       }
       catch (e) {
         reject(e);
