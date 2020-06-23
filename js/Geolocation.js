@@ -83,7 +83,6 @@ export default {
     } else {
       coorType = coorType.toLowerCase();
     }
-    
     return new Promise((resolve, reject) => {
       try {
         _module.getCurrentPosition(coorType);
@@ -94,7 +93,38 @@ export default {
       }
       DeviceEventEmitter.once('onGetCurrentLocationPosition', resp => {
         if (resp.errcode) {
-          reject(resp)
+          // 返回JS中标准的Error对象 -by mzeng
+          const error = new Error(resp.errmsg);
+          reject(error);
+          return;
+        }
+        if (!resp.address) {
+          resp.address = `${resp.province} ${resp.city} ${resp.district} ${resp.streetName}`;
+        }
+        resolve(resp);
+      });
+    });
+  },
+  getCurrentPositionWithoutAddrInfo(coorType) {
+    if (!coorType) {
+      coorType = 'bd09ll';
+    } else {
+      coorType = coorType.toLowerCase();
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        _module.getCurrentPosition(coorType);
+      }
+      catch (e) {
+        reject(e);
+        return;
+      }
+      DeviceEventEmitter.once('onGetCurrentLocationPositionWithoutAddrInfo', resp => {
+        if (resp.errcode) {
+          // 返回JS中标准的Error对象 -by mzeng
+          const error = new Error(resp.errmsg);
+          reject(error);
           return;
         }
         if (!resp.address) {

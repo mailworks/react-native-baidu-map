@@ -71,6 +71,24 @@ public class GeolocationModule extends BaseModule
         Log.i("locationClient", "locationClient");
         locationClient.registerLocationListener(this);
     }
+
+    private void initLocationWithoutAddrInfoClient(String coorType) {
+            if(context.getCurrentActivity() != null) {
+                AppUtils.checkPermission(context.getCurrentActivity(), Manifest.permission.ACCESS_FINE_LOCATION);
+            }
+            LocationClientOption option = new LocationClientOption();
+            option.setLocationMode(LocationMode.Hight_Accuracy);
+            option.setCoorType(coorType);
+            option.setIsNeedAddress(false);
+            option.setIsNeedAltitude(false);
+            option.setIsNeedLocationDescribe(false);
+            option.setOpenGps(true);
+            locationClient = new LocationClient(context.getApplicationContext());
+            locationClient.setLocOption(option);
+            Log.i("locationClient", "locationClient");
+            locationClient.registerLocationListener(this);
+        }
+
     /**
      *
      * @return
@@ -119,6 +137,20 @@ public class GeolocationModule extends BaseModule
             initLocationClient(coorType);
         }
         Log.i("getCurrentPosition", "getCurrentPosition");
+        locationClient.start();
+    }
+
+    @ReactMethod
+    public void getCurrentPositionWithoutAddrInfo(String coorType) {
+        if (locating) {
+            return;
+        }
+        locateOnce = true;
+        locating = true;
+        if (locationClient == null) {
+            initLocationWithoutAddrInfoClient(coorType);
+        }
+        Log.i("getCurrentPositionWithoutAddrInfo", "getCurrentPositionWithoutAddrInfo");
         locationClient.start();
     }
 
@@ -184,7 +216,11 @@ public class GeolocationModule extends BaseModule
 
         if (locateOnce) {
             locating = false;
-            sendEvent("onGetCurrentLocationPosition", params);
+            if (locationClient.getLocOption().isNeedAltitude) {
+                sendEvent("onGetCurrentLocationPosition", params);
+            } else {
+                sendEvent("onGetCurrentLocationPositionWithoutAddrInfo", params);
+            }
             locationClient.stop();
             locationClient = null;
         } else {

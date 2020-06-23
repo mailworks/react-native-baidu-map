@@ -380,6 +380,24 @@ declare namespace ReactNativeBaiduMap {
     }>;
 
     /**
+     * 获取当前定位信息
+     * @param coorType 定位类型
+     */
+    export function getCurrentPositionWithoutAddrInfo(
+        coorType?: CoorType
+    ): Promise<{
+      latitude: number;
+      longitude: number;
+      address: string;
+      province: string;
+      cityCode: string;
+      city: string;
+      district: string;
+      streetName: string;
+      streetNumber: string;
+    }>;
+
+    /**
      * 开始持续定位
      * @param listener 持续定位触发的监听函数
      * @param coorType 定位类型
