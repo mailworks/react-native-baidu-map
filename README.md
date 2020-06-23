@@ -115,7 +115,7 @@ BaiduMapManager.initSDK('sIMQlfmOXhQmPLF1QMh4aBp8zZO9Lb2A');
 | onMapPoiClick           | func  | undefined|
 
 #### Overlay 覆盖物
-    const { Marker, Cluster, Arc, Circle, Polyline, Polygon, Text, InfoWindow } = Overlay;
+    const { Marker, Cluster, Arc, Circle, Polyline, Polygon, InfoWindow, HeatMap } = Overlay;
 
 ##### 颜色取值说明
 6 位(RRGGBB)或 8 位(AARRGGBB)
@@ -124,13 +124,14 @@ BaiduMapManager.initSDK('sIMQlfmOXhQmPLF1QMh4aBp8zZO9Lb2A');
 | Prop                    | Type  | Default  | Description
 | ----------------------- |:-----:| :-------:| -------
 | title                   | string| null     | 如果没有 InfoWindow，将会根据 title 生成 InfoWindow
-| titleOffsetY            | int   | -80        | title 作为 InfoWindow 展示的 y 轴偏移量，仅 Android
+| titleOffsetY            | int   | -80      | title 作为 InfoWindow 展示的 y 轴偏移量，仅 Android
 | location                | object| {latitude: 0, longitude: 0}    |
 | perspective             | bool  | null     | 仅 Android
 | flat                    | bool  | null     | 仅 Android
 | rotate                  | float | 0        | 旋转角度，仅 Android
 | icon                    | any   | null     | icon图片，同 <Image> 的 source 属性
 | alpha                   | float | 1        | 透明度，仅 Android
+| animateType             | string|          | 动画效果：drop/grow/jump (iOS 仅支持 drop)
 | pinColor                | string| red      | red/green/purple，大头针颜色，仅 iOS
 | onClick                 | func  |          | 点击事件回调
 ##### Cluster 点聚合
@@ -175,6 +176,9 @@ BaiduMapManager.initSDK('sIMQlfmOXhQmPLF1QMh4aBp8zZO9Lb2A');
 | rotate                  | float |          |
 | location                | object|{latitude: 0, longitude: 0}
 
+
+##### MarkerIcon 使用 View 作为 marker 的 icon
+
 ##### InfoWindow Props 属性
 必须作为 Marker 的子组件
 
@@ -182,13 +186,25 @@ BaiduMapManager.initSDK('sIMQlfmOXhQmPLF1QMh4aBp8zZO9Lb2A');
 | ----------------------- |:-----:| :-------:| -------
 | offsetY                 | int   | 0        | 相对于 point 在 y 轴的偏移量，仅 Android
 
+#### HeatMap Props 属性
+
+| Prop                    | Type  | Default  | Description
+| ----------------------- |:-----:| :-------:| -------
+| points                  | array   |         | 
+| gradient                | object| { colors: ['66FF00', 'FF0000'], startPoints: [0.2, 1.0] } | 颜色渐变对象
+
 ```jsx
 <MapView>
     <Marker/>
     <Marker>
-        <InfoWindow>
+        <InfoWindow style={{ backgroundColor: 'red', width: 200, height: 100}}>
             <View />
         </InfoWindow>
+        <MarkerIcon style={{ backgroundColor: 'red', width: 40, height: 40}}>
+            <View>
+                <Text>ABC</Text>
+            </View>
+        </MarkerIcon>
     </Marker>
     <Cluster>
         <Marker/>
@@ -197,7 +213,8 @@ BaiduMapManager.initSDK('sIMQlfmOXhQmPLF1QMh4aBp8zZO9Lb2A');
     <Circle />
     <Polyline />
     <Polygon />
-    <Text />
+    <Overlay.Text>text</Overlay.Text>
+    <HeatMap />
 </MapView>
 ```
 
@@ -223,6 +240,13 @@ Cluster 示例
     </Cluster>
 </MapView>
 ```
+
+#### BaiduMapManager
+
+| Method                    | Description | Result
+| ------------------------- | ---------------- | -------
+| void initSDK(string apiKey)      | iOS 初始化 SDK   |
+| Promise hasLocationPermission    | 是否有定位权限    |
 
 #### Geolocation Methods
 

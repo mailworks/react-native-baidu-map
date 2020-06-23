@@ -19,6 +19,7 @@ import org.lovebing.reactnative.baidumap.model.IconInfo;
 import org.lovebing.reactnative.baidumap.util.LatLngUtil;
 import org.lovebing.reactnative.baidumap.view.OverlayInfoWindow;
 import org.lovebing.reactnative.baidumap.view.OverlayMarker;
+import org.lovebing.reactnative.baidumap.view.OverlayMarkerIcon;
 
 public class OverlayMarkerManager extends ViewGroupManager<OverlayMarker> {
 
@@ -35,6 +36,11 @@ public class OverlayMarkerManager extends ViewGroupManager<OverlayMarker> {
     @ReactProp(name = "title")
     public void setTitle(OverlayMarker overlayMarker, String title) {
         overlayMarker.setTitle(title);
+    }
+
+    @ReactProp(name = "animateType")
+    public void setAnimateType(OverlayMarker overlayMarker, String animateType) {
+        overlayMarker.setAnimateType(animateType);
     }
 
     @ReactProp(name = "titleOffsetY")
@@ -87,6 +93,8 @@ public class OverlayMarkerManager extends ViewGroupManager<OverlayMarker> {
     public void addView(OverlayMarker parent, View child, int index) {
         if (child instanceof OverlayInfoWindow) {
             parent.setOverlayInfoWindow((OverlayInfoWindow) child);
+        } else if (child instanceof OverlayMarkerIcon) {
+            parent.setIconView(child);
         }
         super.addView(parent, child, index);
     }

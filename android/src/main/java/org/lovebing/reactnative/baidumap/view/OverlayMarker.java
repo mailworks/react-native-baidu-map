@@ -10,12 +10,12 @@ package org.lovebing.reactnative.baidumap.view;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.graphics.drawable.Animatable;
 import android.net.Uri;
 import android.util.AttributeSet;
 
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
@@ -41,13 +41,20 @@ import com.facebook.imagepipeline.request.ImageRequestBuilder;
 
 import org.lovebing.reactnative.baidumap.R;
 import org.lovebing.reactnative.baidumap.model.IconInfo;
+import org.lovebing.reactnative.baidumap.util.BitmapUtil;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class OverlayMarker extends ViewGroup implements OverlayView, ClusterItem {
 
+    // TODO 1. 下载中的情况。 2. 清理零引用的 key
+    private static final Map<String, BitmapDescriptor> BITMAP_DESCRIPTOR_MAP = new ConcurrentHashMap<>();
+
     private String title;
     private int titleOffsetY = -100;
+    private MarkerOptions.MarkerAnimateType animateType = MarkerOptions.MarkerAnimateType.none;
     private LatLng position;
     private Float rotate;
     private Boolean flat;
@@ -60,14 +67,13 @@ public class OverlayMarker extends ViewGroup implements OverlayView, ClusterItem
     private OverlayInfoWindow overlayInfoWindow;
     private volatile boolean loadingImage = false;
     private InfoWindow titleInfoWindow;
+    private View iconView;
 
     private final ControllerListener<ImageInfo> imageControllerListener =
             new BaseControllerListener<ImageInfo>() {
                 @Override
-                public void onFinalImageSet(
-                        String id,
-                         final ImageInfo imageInfo,
-                         Animatable animatable) {
+                public void onFinalImageSet(String id, final ImageInfo imageInfo, Animatable animatable) {
+                    Log.i("onFinalImageSet", id);
                     CloseableReference<CloseableImage> imageReference = null;
                     try {
                         imageReference = dataSource.getResult();
@@ -79,6 +85,7 @@ public class OverlayMarker extends ViewGroup implements OverlayView, ClusterItem
                                 if (bitmap != null) {
                                     bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
                                     iconBitmapDescriptor = BitmapDescriptorFactory.fromBitmap(bitmap);
+                                    BITMAP_DESCRIPTOR_MAP.put(iconInfo.getUri(), iconBitmapDescriptor);
                                 }
                             }
                         }
@@ -157,8 +164,34 @@ public class OverlayMarker extends ViewGroup implements OverlayView, ClusterItem
         this.overlayInfoWindow = overlayInfoWindow;
     }
 
-    public String getTitle() {
-        return title;
+    public void setIconView(View iconView) {
+        this.iconView = iconView;
+        if (marker != null) {
+            iconBitmapDescriptor = BitmapUtil.createBitmapDescriptor(iconView);
+            marker.setIcon(iconBitmapDescriptor);
+        }
+    }
+
+    public void setAnimateType(String animateType) {
+        if (animateType == null) {
+            return;
+        }
+        switch (animateType) {
+            case "drop":
+                this.animateType = MarkerOptions.MarkerAnimateType.drop;
+                break;
+            case "grow":
+                this.animateType = MarkerOptions.MarkerAnimateType.grow;
+                break;
+            case "jump":
+                this.animateType = MarkerOptions.MarkerAnimateType.jump;
+                break;
+            default:
+                this.animateType = MarkerOptions.MarkerAnimateType.none;
+        }
+        if (marker != null) {
+            marker.setAnimateType(this.animateType.ordinal());
+        }
     }
 
     public void setTitle(String title) {
@@ -181,14 +214,6 @@ public class OverlayMarker extends ViewGroup implements OverlayView, ClusterItem
         }
     }
 
-    public BitmapDescriptor getIconBitmapDescriptor() {
-        return iconBitmapDescriptor;
-    }
-
-    public void setIconBitmapDescriptor(BitmapDescriptor iconBitmapDescriptor) {
-        this.iconBitmapDescriptor = iconBitmapDescriptor;
-    }
-
     public Float getRotate() {
         return rotate;
     }
@@ -200,19 +225,11 @@ public class OverlayMarker extends ViewGroup implements OverlayView, ClusterItem
         }
     }
 
-    public Boolean getFlat() {
-        return flat;
-    }
-
     public void setFlat(Boolean flat) {
         this.flat = flat;
         if (marker != null) {
             marker.setFlat(flat);
         }
-    }
-
-    public Boolean getPerspective() {
-        return perspective;
     }
 
     public void setPerspective(Boolean perspective) {
@@ -224,6 +241,10 @@ public class OverlayMarker extends ViewGroup implements OverlayView, ClusterItem
 
     public void setIcon(IconInfo iconInfo) {
         if (iconInfo.getUri() == null || iconInfo.getUri().length() == 0) {
+            return;
+        }
+        if (BITMAP_DESCRIPTOR_MAP.containsKey(iconInfo.getUri())) {
+            iconBitmapDescriptor = BITMAP_DESCRIPTOR_MAP.get(iconInfo.getUri());
             return;
         }
         Log.i("download", iconInfo.getUri());
@@ -253,23 +274,16 @@ public class OverlayMarker extends ViewGroup implements OverlayView, ClusterItem
     @Override
     public BitmapDescriptor getBitmapDescriptor() {
         BitmapDescriptor result;
-        if (getIconBitmapDescriptor() != null) {
-            result = getIconBitmapDescriptor();
+        if (iconBitmapDescriptor != null) {
+            result = iconBitmapDescriptor;
         } else {
             result = BitmapDescriptorFactory.fromResource(R.mipmap.icon_gcoding);
         }
         if (iconInfo != null
                 && iconInfo.getWidth() > 0
                 && iconInfo.getHeight() > 0) {
-            int height = result.getBitmap().getHeight();
-            int width = result.getBitmap().getWidth();
-            float scaleWidth = ((float) iconInfo.getWidth()) / width;
-            float scaleHeight = ((float) iconInfo.getHeight()) / height;
-            Matrix matrix = new Matrix();
-            matrix.postScale(scaleWidth, scaleHeight);
-
-            Bitmap newBitmap = Bitmap.createBitmap(result.getBitmap(), 0, 0, width, height, matrix, true);
-            result = BitmapDescriptorFactory.fromBitmap(newBitmap);
+            result = BitmapDescriptorFactory.fromBitmap(BitmapUtil.resizeBitmap(result.getBitmap(),
+                    iconInfo.getWidth(), iconInfo.getHeight()));
         }
         return result;
     }
@@ -297,6 +311,10 @@ public class OverlayMarker extends ViewGroup implements OverlayView, ClusterItem
         if (marker != null) {
             marker.remove();
             marker = null;
+            overlayInfoWindow = null;
+            titleInfoWindow = null;
+            iconView = null;
+            iconBitmapDescriptor = null;
         }
     }
 
@@ -315,12 +333,14 @@ public class OverlayMarker extends ViewGroup implements OverlayView, ClusterItem
     }
 
     private void addOverlay(BaiduMap baiduMap) {
-        BitmapDescriptor icon = getBitmapDescriptor();
+        if (iconView != null) {
+            iconBitmapDescriptor = BitmapUtil.createBitmapDescriptor(iconView);
+        }
         MarkerOptions option = new MarkerOptions()
                 .position(position)
-                .title(getTitle())
                 .alpha(getAlpha())
-                .icon(icon);
+                .animateType(animateType)
+                .icon(getBitmapDescriptor());
         if (rotate != null) {
             option.rotate(rotate);
         }

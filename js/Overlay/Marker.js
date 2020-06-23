@@ -5,12 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
- import {
+import {
   requireNativeComponent,
-  View,
-  NativeModules,
-  Platform,
-  DeviceEventEmitter
+  View
 } from 'react-native';
 import resolveAssetSource from 'react-native/Libraries/Image/resolveAssetSource';
 
@@ -27,12 +24,14 @@ export default class Marker extends Component {
     rotate: PropTypes.number,
     flat: PropTypes.bool,
     icon: PropTypes.any,
+    animateType: PropTypes.string,
     pinColor: PropTypes.string,
     onClick: PropTypes.func
   };
 
   static defaultProps = {
     titleOffsetY: -80,
+    animateType: '',
     location: {
       latitude: 0,
       longitude: 0
