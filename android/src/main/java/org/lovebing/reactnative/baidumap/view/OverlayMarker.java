@@ -244,7 +244,16 @@ public class OverlayMarker extends ViewGroup implements OverlayView, ClusterItem
             return;
         }
         if (BITMAP_DESCRIPTOR_MAP.containsKey(iconInfo.getUri())) {
-            iconBitmapDescriptor = BITMAP_DESCRIPTOR_MAP.get(iconInfo.getUri());
+            BitmapDescriptor cache = BITMAP_DESCRIPTOR_MAP.get(iconInfo.getUri());
+            if(iconInfo != null
+                    && iconInfo.getWidth() > 0
+                    && iconInfo.getHeight() > 0){
+                Bitmap newImage = BitmapUtil.resizeBitmap(cache.getBitmap(),
+                        iconInfo.getWidth(), iconInfo.getHeight());
+                iconBitmapDescriptor = BitmapDescriptorFactory.fromBitmap(newImage);
+            }else{
+                iconBitmapDescriptor = cache;
+            }
             return;
         }
         Log.i("download", iconInfo.getUri());
@@ -282,8 +291,9 @@ public class OverlayMarker extends ViewGroup implements OverlayView, ClusterItem
         if (iconInfo != null
                 && iconInfo.getWidth() > 0
                 && iconInfo.getHeight() > 0) {
-            result = BitmapDescriptorFactory.fromBitmap(BitmapUtil.resizeBitmap(result.getBitmap(),
-                    iconInfo.getWidth(), iconInfo.getHeight()));
+            Bitmap newImage = BitmapUtil.resizeBitmap(result.getBitmap(),
+                    iconInfo.getWidth(), iconInfo.getHeight());
+            result = BitmapDescriptorFactory.fromBitmap(newImage);
         }
         return result;
     }
